@@ -1,0 +1,50 @@
+<Window
+    Icon="/Assets/avalonia-logo.ico"
+    Title="AvaloniaProj"
+    d:DesignHeight="600"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="AvaloniaProj.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AvaloniaProj.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.DataContext>
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid
+        ColumnDefinitions="*,3*,*"
+        RowDefinitions="*, 2*, *"
+        ShowGridLines="True">
+        <Grid
+            Grid.Column="1"
+            Grid.Row="0"
+            ShowGridLines="True" />
+        <ListBox
+            Grid.Column="1"
+            Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch" />
+        <Button
+            CornerRadius="10"
+            Grid.Column="1"
+            Grid.Row="2"
+            HorizontalAlignment="Right"
+            HorizontalContentAlignment="Center"
+            Margin="0,10,0,0"
+            MinHeight="40"
+            MinWidth="100"
+            VerticalAlignment="Top"
+            VerticalContentAlignment="Center">
+            Скачать
+        </Button>
+    </Grid>
+</Window>
