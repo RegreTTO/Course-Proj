@@ -25,9 +25,24 @@
         RowDefinitions="*, 2*, *"
         ShowGridLines="True">
         <Grid
+            ColumnDefinitions="1.3*,*, *, *"
             Grid.Column="1"
             Grid.Row="0"
-            ShowGridLines="True" />
+            ShowGridLines="True">
+            <TextBox
+                HorizontalAlignment="Stretch"
+                Margin="0,0,0,10"
+                MinHeight="10"
+                Name="filePath"
+                VerticalAlignment="Bottom" />
+            <Button
+                CornerRadius="10"
+                Grid.Column="1"
+                Margin="10,0,0,10"
+                VerticalAlignment="Bottom">
+                Загрузить
+            </Button>
+        </Grid>
         <ListBox
             Grid.Column="1"
             Grid.Row="1"
