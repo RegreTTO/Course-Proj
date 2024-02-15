@@ -21,24 +21,29 @@
     </Design.DataContext>
 
     <Grid
-        ColumnDefinitions="*,3*,*"
+        ColumnDefinitions="0.5*,3*,3*"
         RowDefinitions="*, 2*, *"
-        ShowGridLines="True">
+        ShowGridLines="False">
         <Grid
-            ColumnDefinitions="1.3*,*, *, *"
+            ColumnDefinitions="2.5*,*"
             Grid.Column="1"
             Grid.Row="0"
-            ShowGridLines="True">
-            <TextBox
+            ShowGridLines="False">
+            <StackPanel
                 HorizontalAlignment="Stretch"
                 Margin="0,0,0,10"
-                MinHeight="10"
-                Name="filePath"
-                VerticalAlignment="Bottom" />
+                VerticalAlignment="Bottom">
+                <Label HorizontalAlignment="Center">
+                    Путь файла
+                </Label>
+                <TextBox Name="filePath" />
+            </StackPanel>
+
             <Button
                 CornerRadius="10"
                 Grid.Column="1"
                 Margin="10,0,0,10"
+                Padding="6"
                 VerticalAlignment="Bottom">
                 Загрузить
             </Button>
@@ -55,11 +60,25 @@
             HorizontalAlignment="Right"
             HorizontalContentAlignment="Center"
             Margin="0,10,0,0"
-            MinHeight="40"
-            MinWidth="100"
+            Padding="10"
             VerticalAlignment="Top"
-            VerticalContentAlignment="Center">
+            VerticalContentAlignment="Center"
+            Width="100">
             Скачать
         </Button>
+        <StackPanel
+            Grid.Column="2"
+            Grid.Row="0"
+            HorizontalAlignment="Center"
+            Margin="30,0,15,0"
+            VerticalAlignment="Center">
+            <Label HorizontalAlignment="Center" Margin="0,0,0,2">
+                Введите IP-адрес для подключения
+            </Label>
+            <TextBox />
+            <Button HorizontalAlignment="Right" Margin="0,5,0,0">
+                Подключиться
+            </Button>
+        </StackPanel>
     </Grid>
 </Window>
