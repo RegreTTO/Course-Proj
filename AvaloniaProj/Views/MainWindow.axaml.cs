@@ -1,8 +1,6 @@
-using System.Diagnostics;
+using System.IO;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.VisualTree;
-using DynamicData;
+using FileFunc;
 
 namespace AvaloniaProj.Views;
 
@@ -11,6 +9,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        
+        if (!Directory.Exists(FileFuncs.Path))
+        {
+            Directory.CreateDirectory(FileFuncs.Path);
+        }
+
     }
 }
