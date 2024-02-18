@@ -27,7 +27,8 @@
 
 
     <ItemGroup>
-      <ProjectReference Include="..\Libs\Cipher\Cipher.csproj" />
+      <ProjectReference Include="..\Libs\ConnectionManager\ConnectionManager.csproj" />
+      <ProjectReference Include="..\Libs\Crypto\Crypto.csproj" />
       <ProjectReference Include="..\Libs\FileFunc\FileFunc.csproj" />
     </ItemGroup>
 </Project>

@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Web;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using DynamicData;
+using Crypto;
 using ReactiveUI;
 using FileFunc;
 
@@ -38,6 +39,14 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _selectedItem, value);
     }
 
+    private string _exceptionText = "";
+
+    public string ExceptionText
+    {
+        get => _exceptionText;
+        set => this.RaiseAndSetIfChanged(ref _exceptionText, value);
+    }
+
     public MainWindowViewModel()
     {
         var alreadySaved = Directory.GetFiles(FileFuncs.Path);
@@ -45,38 +54,48 @@ public class MainWindowViewModel : ViewModelBase
         {
             foreach (var filePath in alreadySaved)
             {
-                FileNames.Add(new FileInfo(filePath).Name);
+                string name = new FileInfo(filePath).Name;
+                FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
             }
         }
     }
 
+
     public async void UploadButton_Click()
     {
-        if (FileName.Length == 0)
+        try
         {
-            var topLevel =
-                TopLevel.GetTopLevel(
-                    (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-            if (topLevel is null)
+            if (FileName.Length == 0)
             {
-                throw new Exception("Ooops, something went wrong :(");
-            }
+                var topLevel =
+                    TopLevel.GetTopLevel(
+                        (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
+                        ?.MainWindow);
+                if (topLevel is null)
+                {
+                    throw new Exception("Ooops, something went wrong :(");
+                }
 
-            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "I HATE MY LIFE",
-                AllowMultiple = false
-            });
-            if (files.Count < 1)
-            {
-                throw new InvalidDataException("You must pick a file!");
-            }
+                var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "I HATE MY LIFE",
+                    AllowMultiple = false
+                });
+                if (files.Count < 1)
+                {
+                    return;
+                }
 
-            foreach (var file in files)
-            {
-                if (FileFuncs.SaveFile(new FileInfo(HttpUtility.UrlDecode(file.Path.AbsolutePath))))
-                    FileNames.Add(file.Name);
+                foreach (var file in files)
+                {
+                    if (FileFuncs.SaveFile(new FileInfo(HttpUtility.UrlDecode(file.Path.AbsolutePath))))
+                        FileNames.Add(file.Name);
+                }
             }
+        }
+        catch (Exception e)
+        {
+            ExceptionText = e.Message;
         }
     }
 
@@ -90,26 +109,33 @@ public class MainWindowViewModel : ViewModelBase
 
     public async void DownloadButton_Click()
     {
-        var fileToDownload = SelectedItem as string ?? string.Empty;
-        if (fileToDownload == "" || !FileFuncs.IsFileSaved(fileToDownload)) return;
-        var topLevel = TopLevel.GetTopLevel(
-            (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
-        if (topLevel is null)
+        try
         {
-            throw new Exception("Ooops, something went wrong :(");
-        }
+            var fileToDownload = SelectedItem as string + FileFuncs.Extension;
+            if (fileToDownload == "" || !FileFuncs.IsFileSaved(fileToDownload)) return;
+            var topLevel = TopLevel.GetTopLevel(
+                (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+            if (topLevel is null)
+            {
+                throw new Exception("Ooops, something went wrong :(");
+            }
 
-        var dialog = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
+            var dialog = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions()
+            {
+                Title = "Save your file",
+                AllowMultiple = false
+            });
+            var newFilePath = $"{dialog[0].Path.AbsolutePath}/{fileToDownload}";
+            newFilePath = Regex.Replace(newFilePath, @"\.ciphered$", string.Empty);
+            if (!File.Exists(newFilePath))
+            {
+                var msg = Crypto.Cipher.Decode(await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload));
+                await File.WriteAllBytesAsync(newFilePath, msg);
+            }
+        }
+        catch (Exception e)
         {
-            Title = "Save your file",
-            AllowMultiple = false
-        });
-        var newFilePath = $"{dialog[0].Path.AbsolutePath}/{fileToDownload}";
-        if (!File.Exists(newFilePath))
-            File.Copy(FileFuncs.Path + fileToDownload, newFilePath);
-        else
-        {
-            
+            ExceptionText = e.Message;
         }
     }
 }

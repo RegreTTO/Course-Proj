@@ -26,18 +26,28 @@
         ColumnDefinitions="4*,3*"
         RowDefinitions="*, 2*, *"
         ShowGridLines="False">
-        <Button
-            Command="{Binding UploadButton_Click}"
-            CornerRadius="10"
-            FontSize="18"
+        <StackPanel
             Grid.Column="0"
             HorizontalAlignment="Center"
-            HorizontalContentAlignment="Center"
-            Margin="10,0,0,10"
-            VerticalAlignment="Bottom"
-            VerticalContentAlignment="Center">
-            Загрузить файл
-        </Button>
+            VerticalAlignment="Bottom">
+            <TextBlock
+                HorizontalAlignment="Center"
+                Text="{Binding ExceptionText}"
+                TextWrapping="Wrap"
+                VerticalAlignment="Center" />
+            <Button
+                Command="{Binding UploadButton_Click}"
+                CornerRadius="10"
+                FontSize="18"
+                HorizontalAlignment="Center"
+                HorizontalContentAlignment="Center"
+                Margin="10,0,0,10"
+                VerticalAlignment="Bottom"
+                VerticalContentAlignment="Center">
+                Загрузить файл
+            </Button>
+        </StackPanel>
+
         <ListBox
             BorderBrush="White"
             BorderThickness="1"
