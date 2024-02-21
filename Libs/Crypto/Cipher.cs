@@ -61,9 +61,13 @@ public static class Cipher
             var phi = (p - 1) * (q - 1);
             e = 65537;
             d = ModInverse(e, phi);
-            BigInteger test = 1029375836273496197;
+            BigInteger test = 7;
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
                 throw new InvalidDataException("Keys not match!");
+            if (n.GetByteCount() < 2)
+            {
+                throw new InvalidDataException("p, q too low. p*q must be at least 16 bytes long!");
+            }
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
         }
@@ -140,7 +144,7 @@ public static class Cipher
     public static byte[] Decode(byte[] encrypted)
     {
         int keyByteNum = n.GetByteCount();
-        int blockCount = (int)Math.Ceiling(encrypted.Length / ((double)keyByteNum + 1));
+        int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
         for (int i = 0, j = 0, padding = 0; i < encrypted.Length; i += keyByteNum + padding, j++)
@@ -155,6 +159,8 @@ public static class Cipher
         List<byte> dec = new List<byte>();
         foreach (byte[] block in blocks)
         {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if(block == null) continue;
             dec.AddRange(block);
         }
 
