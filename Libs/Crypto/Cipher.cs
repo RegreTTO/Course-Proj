@@ -159,8 +159,7 @@ public static class Cipher
         List<byte> dec = new List<byte>();
         foreach (byte[] block in blocks)
         {
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if(block == null) continue;
+            if(block is null) continue;
             dec.AddRange(block);
         }
 
