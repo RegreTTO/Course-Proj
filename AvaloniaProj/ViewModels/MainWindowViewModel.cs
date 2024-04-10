@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -58,6 +59,9 @@ public class MainWindowViewModel : ViewModelBase
                 FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
             }
         }
+
+        Process thisProc = Process.GetCurrentProcess();
+        thisProc.PriorityClass = ProcessPriorityClass.BelowNormal;
     }
 
 

@@ -91,15 +91,7 @@ public static class Cipher
         m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
-        if (block.Length == n.GetByteCount())
-        {
-            bts.Add(1);
-        }
-        else
-        {
-            bts.Add(0);
-        }
-
+        bts.Add((byte)block.Length);
         bts.AddRange(block);
         block = bts.ToArray();
         m.ReleaseMutex();
@@ -147,10 +139,10 @@ public static class Cipher
         int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
-        for (int i = 0, j = 0, padding = 0; i < encrypted.Length; i += keyByteNum + padding, j++)
+        for (int i = 0, j = 0, len = 0; i < encrypted.Length; i += len, j++)
         {
-            padding = encrypted[i++] == 0 ? -1 : 0;
-            blocks[j] = encrypted[i..int.Min(i + keyByteNum + padding, encrypted.Length)];
+            len = encrypted[i++];
+            blocks[j] = encrypted[i..(i + len)];
             var j1 = j;
             tasks.Add(Task.Run(() => DecodeBlock(ref blocks[j1])));
         }
@@ -159,7 +151,7 @@ public static class Cipher
         List<byte> dec = new List<byte>();
         foreach (byte[] block in blocks)
         {
-            if(block is null) continue;
+            if (block is null) continue;
             dec.AddRange(block);
         }
 
