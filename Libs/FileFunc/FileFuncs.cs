@@ -26,23 +26,26 @@ public static class FileFuncs
     /// <summary>
     /// Creates file 'filename'.ciphered
     /// </summary>
-    private static void EncodeFile(FileInfo file)
+    async private static void EncodeFile(FileInfo file)
     {
-        byte[] msg = File.ReadAllBytes(file.FullName);
-        byte[] encoded = Cipher.Encode(msg);
+        byte[] msg = await File.ReadAllBytesAsync(file.FullName);
+        byte[] encoded = await Cipher.Encode(msg);
         string cipheredFileName = Path + file.Name + Extension;
-        File.WriteAllBytes(cipheredFileName, encoded);
+        await File.WriteAllBytesAsync(cipheredFileName, encoded);
     }
 
-    public static bool SaveFile(FileInfo filePath)
+    public static void SaveFile(FileInfo filePath)
     {
-        if (IsFileSaved(filePath.Name) ||
-            File.GetAttributes(filePath.FullName) == FileAttributes.Directory)
+        if (IsFileSaved(filePath.Name))
         {
-            return false;
+            throw new InvalidDataException("Файл уже зашифрован и сохранен!");
+        }
+
+        if (File.GetAttributes(filePath.FullName) == FileAttributes.Directory)
+        {
+            throw new InvalidDataException("Вы не можете выбрать директорию!");
         }
 
         EncodeFile(filePath);
-        return true;
     }
 }

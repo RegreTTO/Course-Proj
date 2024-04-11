@@ -73,15 +73,6 @@ public static class Cipher
         }
     }
 
-    private static void PadZero(ref byte[] bts, int len)
-    {
-        var zeros = Enumerable.Repeat<byte>(0, len - bts.Length);
-        List<byte> padded = new List<byte>();
-        padded.AddRange(bts);
-        padded.AddRange(zeros);
-        bts = padded.ToArray();
-    }
-
     private static Task EncodeBlock(ref byte[] block)
     {
         List<byte> tmp = new List<byte>(block);
@@ -91,17 +82,15 @@ public static class Cipher
         BigInteger enc = BigInteger.ModPow(num, e, n);
         Debug.WriteLine($"Message block: {num}");
         Debug.WriteLine($"Encrypted block: {enc}");
-        m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
         bts.Add((byte)(block.Length));
         bts.AddRange(block);
         block = bts.ToArray();
-        m.ReleaseMutex();
         return Task.CompletedTask;
     }
 
-    public static byte[] Encode(byte[] msg)
+    public static Task<byte[]> Encode(byte[] msg)
     {
         int keyByteNum = n.GetByteCount() - 1;
         int blockCount = (int)Math.Ceiling(msg.Length / (double)keyByteNum);
@@ -122,7 +111,7 @@ public static class Cipher
         }
 
 
-        return enc.ToArray();
+        return Task.FromResult(enc.ToArray());
     }
 
     private static Task DecodeBlock(ref byte[] block)
@@ -130,14 +119,12 @@ public static class Cipher
         BigInteger num = new BigInteger(block);
         BigInteger dec = BigInteger.ModPow(num, d, n);
         Debug.WriteLine($"Decrypted block: {dec}");
-        m.WaitOne();
         block = dec.ToByteArray();
         block = block[0..^1];
-        m.ReleaseMutex();
         return Task.CompletedTask;
     }
 
-    public static byte[] Decode(byte[] encrypted)
+    public static Task<byte[]> Decode(byte[] encrypted)
     {
         int keyByteNum = n.GetByteCount();
         int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
@@ -159,6 +146,6 @@ public static class Cipher
             dec.AddRange(block);
         }
 
-        return dec.ToArray();
+        return Task.FromResult(dec.ToArray());
     }
 }
