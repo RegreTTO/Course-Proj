@@ -84,6 +84,9 @@ public static class Cipher
 
     private static Task EncodeBlock(ref byte[] block)
     {
+        List<byte> tmp = new List<byte>(block);
+        tmp.Add(1);
+        block = tmp.ToArray();
         BigInteger num = new BigInteger(block);
         BigInteger enc = BigInteger.ModPow(num, e, n);
         Debug.WriteLine($"Message block: {num}");
@@ -91,7 +94,7 @@ public static class Cipher
         m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
-        bts.Add((byte)block.Length);
+        bts.Add((byte)(block.Length));
         bts.AddRange(block);
         block = bts.ToArray();
         m.ReleaseMutex();
@@ -129,6 +132,7 @@ public static class Cipher
         Debug.WriteLine($"Decrypted block: {dec}");
         m.WaitOne();
         block = dec.ToByteArray();
+        block = block[0..^1];
         m.ReleaseMutex();
         return Task.CompletedTask;
     }
