@@ -84,6 +84,9 @@ public static class Cipher
 
     private static Task EncodeBlock(ref byte[] block)
     {
+        List<byte> tmp = new List<byte>(block);
+        tmp.Add(1);
+        block = tmp.ToArray();
         BigInteger num = new BigInteger(block);
         BigInteger enc = BigInteger.ModPow(num, e, n);
         Debug.WriteLine($"Message block: {num}");
@@ -91,15 +94,7 @@ public static class Cipher
         m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
-        if (block.Length == n.GetByteCount())
-        {
-            bts.Add(1);
-        }
-        else
-        {
-            bts.Add(0);
-        }
-
+        bts.Add((byte)(block.Length));
         bts.AddRange(block);
         block = bts.ToArray();
         m.ReleaseMutex();
@@ -137,6 +132,7 @@ public static class Cipher
         Debug.WriteLine($"Decrypted block: {dec}");
         m.WaitOne();
         block = dec.ToByteArray();
+        block = block[0..^1];
         m.ReleaseMutex();
         return Task.CompletedTask;
     }
@@ -147,10 +143,10 @@ public static class Cipher
         int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
-        for (int i = 0, j = 0, padding = 0; i < encrypted.Length; i += keyByteNum + padding, j++)
+        for (int i = 0, j = 0, len = 0; i < encrypted.Length; i += len, j++)
         {
-            padding = encrypted[i++] == 0 ? -1 : 0;
-            blocks[j] = encrypted[i..int.Min(i + keyByteNum + padding, encrypted.Length)];
+            len = encrypted[i++];
+            blocks[j] = encrypted[i..(i + len)];
             var j1 = j;
             tasks.Add(Task.Run(() => DecodeBlock(ref blocks[j1])));
         }
@@ -159,7 +155,7 @@ public static class Cipher
         List<byte> dec = new List<byte>();
         foreach (byte[] block in blocks)
         {
-            if(block is null) continue;
+            if (block is null) continue;
             dec.AddRange(block);
         }
 
