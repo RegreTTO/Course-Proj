@@ -26,7 +26,7 @@ public static class FileFuncs
     /// <summary>
     /// Creates file 'filename'.ciphered
     /// </summary>
-    async private static void EncodeFile(FileInfo file)
+    async private static Task EncodeFile(FileInfo file)
     {
         byte[] msg = await File.ReadAllBytesAsync(file.FullName);
         byte[] encoded = await Cipher.Encode(msg);
@@ -34,7 +34,7 @@ public static class FileFuncs
         await File.WriteAllBytesAsync(cipheredFileName, encoded);
     }
 
-    public static void SaveFile(FileInfo filePath)
+    public async static Task SaveFile(FileInfo filePath)
     {
         if (IsFileSaved(filePath.Name))
         {
@@ -46,6 +46,6 @@ public static class FileFuncs
             throw new InvalidDataException("Вы не можете выбрать директорию!");
         }
 
-        EncodeFile(filePath);
+        await EncodeFile(filePath);
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -61,7 +62,7 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         Process thisProc = Process.GetCurrentProcess();
-        thisProc.PriorityClass = ProcessPriorityClass.BelowNormal;
+        thisProc.PriorityClass = ProcessPriorityClass.Normal;
     }
 
 
@@ -93,7 +94,8 @@ public class MainWindowViewModel : ViewModelBase
                 IsIndeterminate = true;
                 try
                 {
-                    Dispatcher.UIThread.InvokeAsync(() => { FileFuncs.SaveFile(new FileInfo(file.Path.LocalPath)); });
+                    var task = Task.Run(() => FileFuncs.SaveFile(new FileInfo(file.Path.LocalPath)));
+                    await task;
                 }
                 catch (InvalidDataException e)
                 {
@@ -101,7 +103,6 @@ public class MainWindowViewModel : ViewModelBase
                 }
 
                 FileNames.Add(file.Name);
-
                 IsIndeterminate = false;
             }
         }
@@ -141,8 +142,10 @@ public class MainWindowViewModel : ViewModelBase
             newFilePath = Regex.Replace(newFilePath, @"\.ciphered$", string.Empty);
             if (!File.Exists(newFilePath))
             {
+                IsIndeterminate = true;
                 var msg = await Cipher.Decode(await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload));
                 await File.WriteAllBytesAsync(newFilePath, msg);
+                IsIndeterminate = false;
             }
             else
             {

@@ -61,12 +61,12 @@ public static class Cipher
             var phi = (p - 1) * (q - 1);
             e = 65537;
             d = ModInverse(e, phi);
-            BigInteger test = 7;
+            BigInteger test = new BigInteger(1.40463224e+120);
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
                 throw new InvalidDataException("Keys not match!");
             if (n.GetByteCount() < 2)
             {
-                throw new InvalidDataException("p, q too low. p*q must be at least 16 bytes long!");
+                throw new InvalidDataException("p, q too low. p*q must be at least 16 bits long!");
             }
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
@@ -80,8 +80,15 @@ public static class Cipher
         block = tmp.ToArray();
         BigInteger num = new BigInteger(block);
         BigInteger enc = BigInteger.ModPow(num, e, n);
-        Debug.WriteLine($"Message block: {num}");
-        Debug.WriteLine($"Encrypted block: {enc}");
+        string s = "";
+        foreach (byte b in enc.ToByteArray())
+        {
+            s += b.ToString() + ' ';
+        }
+
+        Debug.WriteLine($"Encrypted: {enc}\nDecrypted: {num}\nd: {d}\nn: {n}");
+
+        m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
         byte[] bytes = BitConverter.GetBytes(block.Length);
@@ -89,12 +96,13 @@ public static class Cipher
         bts.AddRange(bytes);
         bts.AddRange(block);
         block = bts.ToArray();
+        m.ReleaseMutex();
         return Task.CompletedTask;
     }
 
     public static Task<byte[]> Encode(byte[] msg)
     {
-        int keyByteNum = n.GetByteCount() - 1;
+        int keyByteNum = n.GetByteCount() - 2;
         int blockCount = (int)Math.Ceiling(msg.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
@@ -120,9 +128,11 @@ public static class Cipher
     {
         BigInteger num = new BigInteger(block);
         BigInteger dec = BigInteger.ModPow(num, d, n);
-        Debug.WriteLine($"Decrypted block: {dec}");
+        Debug.WriteLine($"Encrypted: {num}\nDecrypted: {dec}\nd: {d}\nn: {n}");
+        m.WaitOne();
         block = dec.ToByteArray();
         block = block[0..^1];
+        m.ReleaseMutex();
         return Task.CompletedTask;
     }
 
