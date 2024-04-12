@@ -84,7 +84,9 @@ public static class Cipher
         Debug.WriteLine($"Encrypted block: {enc}");
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
-        bts.Add((byte)(block.Length));
+        byte[] bytes = BitConverter.GetBytes(block.Length);
+        bts.Add((byte)bytes.Length);
+        bts.AddRange(bytes);
         bts.AddRange(block);
         block = bts.ToArray();
         return Task.CompletedTask;
@@ -129,10 +131,14 @@ public static class Cipher
         int keyByteNum = n.GetByteCount();
         int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
+        Debug.WriteLine(
+            $"Message byte length:{encrypted.Length}\nBlock count: {blockCount}\nKey byte count:{keyByteNum}");
         List<Task> tasks = new List<Task>();
         for (int i = 0, j = 0, len = 0; i < encrypted.Length; i += len, j++)
         {
-            len = encrypted[i++];
+            int len_bts = encrypted[i++];
+            len = BitConverter.ToInt32(encrypted[i..(i + len_bts)]);
+            i += len_bts;
             blocks[j] = encrypted[i..(i + len)];
             var j1 = j;
             tasks.Add(Task.Run(() => DecodeBlock(ref blocks[j1])));
