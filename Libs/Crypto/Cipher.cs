@@ -53,7 +53,7 @@ public static class Cipher
         using (StreamReader reader = new StreamReader(ConfigDir + "keys.json"))
         {
             var pq = JsonConvert.DeserializeObject<Base>(reader.ReadToEnd()) ??
-                     throw new InvalidDataException("JSON is invalid!");
+                     throw new InvalidDataException("Json поврежден!");
             p = BigInteger.Parse(pq.p);
             q = BigInteger.Parse(pq.q);
 
@@ -63,10 +63,10 @@ public static class Cipher
             d = ModInverse(e, phi);
             BigInteger test = new BigInteger(1.40463224e+120);
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
-                throw new InvalidDataException("Keys not match!");
+                throw new InvalidDataException("Ключи не подходят! Выберите взаимопростые числа p и q!");
             if (n.GetByteCount() < KeyLenDec)
             {
-                throw new InvalidDataException($"p, q too low. p*q must be at least {KeyLenDec * 8} bits long!");
+                throw new InvalidDataException($"p и q слишком малы! p*q должно быть хотя бы {KeyLenDec * 8} бит в длину!");
             }
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
