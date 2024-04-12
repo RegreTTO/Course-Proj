@@ -15,7 +15,7 @@ public static class Cipher
     public static BigInteger n, e, d, p, q;
     public const string ConfigDir = "./config/";
     private static Mutex m = new Mutex();
-
+    private const int KeyLenDec = 3;
     static BigInteger ModInverse(BigInteger a, BigInteger m)
     {
         BigInteger m0 = m;
@@ -64,9 +64,9 @@ public static class Cipher
             BigInteger test = new BigInteger(1.40463224e+120);
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
                 throw new InvalidDataException("Keys not match!");
-            if (n.GetByteCount() < 3)
+            if (n.GetByteCount() < KeyLenDec)
             {
-                throw new InvalidDataException("p, q too low. p*q must be at least 16 bits long!");
+                throw new InvalidDataException($"p, q too low. p*q must be at least {KeyLenDec * 8} bits long!");
             }
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
@@ -97,7 +97,7 @@ public static class Cipher
 
     public static Task<byte[]> Encode(byte[] msg)
     {
-        int keyByteNum = n.GetByteCount() - 2;
+        int keyByteNum = n.GetByteCount() - KeyLenDec;
         int blockCount = (int)Math.Ceiling(msg.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
