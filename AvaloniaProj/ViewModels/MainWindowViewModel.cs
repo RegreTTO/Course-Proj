@@ -143,7 +143,8 @@ public class MainWindowViewModel : ViewModelBase
             if (!File.Exists(newFilePath))
             {
                 IsIndeterminate = true;
-                var msg = await Cipher.Decode(await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload));
+                var bytes = await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload);
+                var msg = await Task.Run(() => Cipher.Decode(bytes));
                 await File.WriteAllBytesAsync(newFilePath, msg);
                 IsIndeterminate = false;
             }
