@@ -15,7 +15,7 @@ public static class Cipher
     public static BigInteger n, e, d, p, q;
     public const string ConfigDir = "./config/";
     private static Mutex m = new Mutex();
-
+    private const int KeyLenDec = 3;
     static BigInteger ModInverse(BigInteger a, BigInteger m)
     {
         BigInteger m0 = m;
@@ -53,7 +53,7 @@ public static class Cipher
         using (StreamReader reader = new StreamReader(ConfigDir + "keys.json"))
         {
             var pq = JsonConvert.DeserializeObject<Base>(reader.ReadToEnd()) ??
-                     throw new InvalidDataException("JSON is invalid!");
+                     throw new InvalidDataException("Json поврежден!");
             p = BigInteger.Parse(pq.p);
             q = BigInteger.Parse(pq.q);
 
@@ -61,25 +61,16 @@ public static class Cipher
             var phi = (p - 1) * (q - 1);
             e = 65537;
             d = ModInverse(e, phi);
-            BigInteger test = 7;
+            BigInteger test = new BigInteger(1.40463224e+120);
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
-                throw new InvalidDataException("Keys not match!");
-            if (n.GetByteCount() < 2)
+                throw new InvalidDataException("Ключи не подходят! Выберите взаимопростые числа p и q!");
+            if (n.GetByteCount() < KeyLenDec)
             {
-                throw new InvalidDataException("p, q too low. p*q must be at least 16 bytes long!");
+                throw new InvalidDataException($"p и q слишком малы! p*q должно быть хотя бы {KeyLenDec * 8} бит в длину!");
             }
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
         }
-    }
-
-    private static void PadZero(ref byte[] bts, int len)
-    {
-        var zeros = Enumerable.Repeat<byte>(0, len - bts.Length);
-        List<byte> padded = new List<byte>();
-        padded.AddRange(bts);
-        padded.AddRange(zeros);
-        bts = padded.ToArray();
     }
 
     private static Task EncodeBlock(ref byte[] block)
@@ -89,21 +80,24 @@ public static class Cipher
         block = tmp.ToArray();
         BigInteger num = new BigInteger(block);
         BigInteger enc = BigInteger.ModPow(num, e, n);
-        Debug.WriteLine($"Message block: {num}");
-        Debug.WriteLine($"Encrypted block: {enc}");
+
+        Debug.WriteLine($"Encrypted: {enc}\nDecrypted: {num}\nd: {d}\nn: {n}");
+
         m.WaitOne();
         block = enc.ToByteArray();
         List<byte> bts = new List<byte>();
-        bts.Add((byte)(block.Length));
+        byte[] bytes = BitConverter.GetBytes(block.Length);
+        bts.Add((byte)bytes.Length);
+        bts.AddRange(bytes);
         bts.AddRange(block);
         block = bts.ToArray();
         m.ReleaseMutex();
         return Task.CompletedTask;
     }
 
-    public static byte[] Encode(byte[] msg)
+    public static Task<byte[]> Encode(byte[] msg)
     {
-        int keyByteNum = n.GetByteCount() - 1;
+        int keyByteNum = n.GetByteCount() - KeyLenDec;
         int blockCount = (int)Math.Ceiling(msg.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
         List<Task> tasks = new List<Task>();
@@ -122,14 +116,14 @@ public static class Cipher
         }
 
 
-        return enc.ToArray();
+        return Task.FromResult(enc.ToArray());
     }
 
     private static Task DecodeBlock(ref byte[] block)
     {
         BigInteger num = new BigInteger(block);
         BigInteger dec = BigInteger.ModPow(num, d, n);
-        Debug.WriteLine($"Decrypted block: {dec}");
+        Debug.WriteLine($"Encrypted: {num}\nDecrypted: {dec}\nd: {d}\nn: {n}");
         m.WaitOne();
         block = dec.ToByteArray();
         block = block[0..^1];
@@ -137,15 +131,19 @@ public static class Cipher
         return Task.CompletedTask;
     }
 
-    public static byte[] Decode(byte[] encrypted)
+    public static Task<byte[]> Decode(byte[] encrypted)
     {
         int keyByteNum = n.GetByteCount();
         int blockCount = (int)Math.Ceiling(encrypted.Length / (double)keyByteNum);
         byte[][] blocks = new byte[blockCount][];
+        Debug.WriteLine(
+            $"Message byte length:{encrypted.Length}\nBlock count: {blockCount}\nKey byte count:{keyByteNum}");
         List<Task> tasks = new List<Task>();
         for (int i = 0, j = 0, len = 0; i < encrypted.Length; i += len, j++)
         {
-            len = encrypted[i++];
+            int len_bts = encrypted[i++];
+            len = BitConverter.ToInt32(encrypted[i..(i + len_bts)]);
+            i += len_bts;
             blocks[j] = encrypted[i..(i + len)];
             var j1 = j;
             tasks.Add(Task.Run(() => DecodeBlock(ref blocks[j1])));
@@ -159,6 +157,6 @@ public static class Cipher
             dec.AddRange(block);
         }
 
-        return dec.ToArray();
+        return Task.FromResult(dec.ToArray());
     }
 }
