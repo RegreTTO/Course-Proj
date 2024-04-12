@@ -64,7 +64,7 @@ public static class Cipher
             BigInteger test = new BigInteger(1.40463224e+120);
             if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
                 throw new InvalidDataException("Keys not match!");
-            if (n.GetByteCount() < 2)
+            if (n.GetByteCount() < 3)
             {
                 throw new InvalidDataException("p, q too low. p*q must be at least 16 bits long!");
             }
@@ -80,11 +80,6 @@ public static class Cipher
         block = tmp.ToArray();
         BigInteger num = new BigInteger(block);
         BigInteger enc = BigInteger.ModPow(num, e, n);
-        string s = "";
-        foreach (byte b in enc.ToByteArray())
-        {
-            s += b.ToString() + ' ';
-        }
 
         Debug.WriteLine($"Encrypted: {enc}\nDecrypted: {num}\nd: {d}\nn: {n}");
 
