@@ -81,7 +81,8 @@ public class MainWindowViewModel : ViewModelBase
             foreach (var filePath in alreadySaved)
             {
                 string name = new FileInfo(filePath).Name;
-                FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
+                if (Regex.IsMatch(name, @".+\.ciphered"))
+                    FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
             }
         }
 
@@ -92,6 +93,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public async void UploadButton_Click()
     {
+        ExceptionText = "";
         if (_areKeysBroken) return;
         try
         {
@@ -150,6 +152,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public async void DownloadButton_Click()
     {
+        ExceptionText = "";
         if (_areKeysBroken) return;
         try
         {
@@ -167,15 +170,27 @@ public class MainWindowViewModel : ViewModelBase
                 Title = "Выберите куда сохранить файл",
                 AllowMultiple = false
             });
+            if (dialog.Count < 1) return;
             var newFilePath = $"{dialog[0].Path.LocalPath}/{fileToDownload}";
             newFilePath = Regex.Replace(newFilePath, @"\.ciphered$", string.Empty);
             if (!File.Exists(newFilePath))
             {
                 IsIndeterminate = true;
+
                 var bytes = await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload);
-                var msg = await Task.Run(() => Cipher.Decode(bytes));
-                await File.WriteAllBytesAsync(newFilePath, msg);
-                IsIndeterminate = false;
+                try
+                {
+                    var msg = await Task.Run(() => Cipher.Decode(bytes));
+                    await File.WriteAllBytesAsync(newFilePath, msg);
+                }
+                catch
+                {
+                    throw new InvalidDataException("Не удалось расшифровать файл! Файл поврежден!");
+                }
+                finally
+                {
+                    IsIndeterminate = false;
+                }
             }
             else
             {
