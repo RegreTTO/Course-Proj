@@ -11,8 +11,6 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        Directory.CreateDirectory(FileFuncs.Path);
-        Directory.CreateDirectory(Crypto.Cipher.ConfigDir);
-        Cipher.ReadKeys();
+
     }
 }

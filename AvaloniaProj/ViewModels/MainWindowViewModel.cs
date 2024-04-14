@@ -8,7 +8,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using Crypto;
 using ReactiveUI;
 using FileFunc;
@@ -17,6 +16,16 @@ namespace AvaloniaProj.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
+    public double MaxFileSizeMb
+    {
+        get => 14;
+    }
+
+    public string MaxFileSizeMbPrompt
+    {
+        get => $"Максимальный размер файла: {MaxFileSizeMb} MB";
+    }
+
     private ObservableCollection<string> _fileNames = new ObservableCollection<string>();
 
     public ObservableCollection<string> FileNames
@@ -49,15 +58,31 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _isIndeterminate, value);
     }
 
+    private bool _areKeysBroken = false;
+
     public MainWindowViewModel()
     {
+        Directory.CreateDirectory(FileFuncs.Path);
+        Directory.CreateDirectory(Cipher.ConfigDir);
+        try
+        {
+            Cipher.ReadKeys();
+        }
+        catch (Exception e)
+        {
+            ExceptionText = e.Message +
+                            "\n Исправьте ключи и перезапустите приложение! До сей поры шифрование работать не будет!";
+            _areKeysBroken = true;
+        }
+
         var alreadySaved = Directory.GetFiles(FileFuncs.Path);
         if (alreadySaved.Length > 0)
         {
             foreach (var filePath in alreadySaved)
             {
                 string name = new FileInfo(filePath).Name;
-                FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
+                if (Regex.IsMatch(name, @".+\.ciphered"))
+                    FileNames.Add(Regex.Replace(name, @"\.ciphered$", string.Empty));
             }
         }
 
@@ -68,6 +93,8 @@ public class MainWindowViewModel : ViewModelBase
 
     public async void UploadButton_Click()
     {
+        ExceptionText = "";
+        if (_areKeysBroken) return;
         try
         {
             var topLevel =
@@ -89,22 +116,25 @@ public class MainWindowViewModel : ViewModelBase
                 return;
             }
 
-            foreach (var file in files)
+            var file = files[0];
+            if ((double)new FileInfo(file.Path.LocalPath).Length / 1024 / 1024 > MaxFileSizeMb)
             {
-                IsIndeterminate = true;
-                try
-                {
-                    var task = Task.Run(() => FileFuncs.SaveFile(new FileInfo(file.Path.LocalPath)));
-                    await task;
-                }
-                catch (InvalidDataException e)
-                {
-                    ExceptionText = e.Message;
-                }
-
-                FileNames.Add(file.Name);
-                IsIndeterminate = false;
+                throw new InvalidDataException("Размер файла слишком большой!");
             }
+
+            IsIndeterminate = true;
+            try
+            {
+                var task = Task.Run(() => FileFuncs.SaveFile(new FileInfo(file.Path.LocalPath)));
+                await task;
+            }
+            catch (InvalidDataException e)
+            {
+                ExceptionText = e.Message;
+            }
+
+            FileNames.Add(file.Name);
+            IsIndeterminate = false;
         }
         catch (Exception e)
         {
@@ -122,6 +152,8 @@ public class MainWindowViewModel : ViewModelBase
 
     public async void DownloadButton_Click()
     {
+        ExceptionText = "";
+        if (_areKeysBroken) return;
         try
         {
             var fileToDownload = SelectedItem as string + FileFuncs.Extension;
@@ -138,15 +170,27 @@ public class MainWindowViewModel : ViewModelBase
                 Title = "Выберите куда сохранить файл",
                 AllowMultiple = false
             });
+            if (dialog.Count < 1) return;
             var newFilePath = $"{dialog[0].Path.LocalPath}/{fileToDownload}";
             newFilePath = Regex.Replace(newFilePath, @"\.ciphered$", string.Empty);
             if (!File.Exists(newFilePath))
             {
                 IsIndeterminate = true;
+
                 var bytes = await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload);
-                var msg = await Task.Run(() => Cipher.Decode(bytes));
-                await File.WriteAllBytesAsync(newFilePath, msg);
-                IsIndeterminate = false;
+                try
+                {
+                    var msg = await Task.Run(() => Cipher.Decode(bytes));
+                    await File.WriteAllBytesAsync(newFilePath, msg);
+                }
+                catch
+                {
+                    throw new InvalidDataException("Не удалось расшифровать файл! Файл поврежден!");
+                }
+                finally
+                {
+                    IsIndeterminate = false;
+                }
             }
             else
             {
