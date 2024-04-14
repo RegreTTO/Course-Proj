@@ -23,17 +23,26 @@
     </Design.DataContext>
 
     <Grid
-        ColumnDefinitions="*, 7*,*"
+        ColumnDefinitions="*,4*,*"
         RowDefinitions="*, 3*, *"
         ShowGridLines="False">
         <StackPanel
             Grid.Column="1"
+            Grid.Row="0"
             HorizontalAlignment="Center"
             VerticalAlignment="Bottom">
+
             <TextBlock
+                Foreground="Red"
                 HorizontalAlignment="Center"
+                Margin="0,0,0,5"
                 Text="{Binding ExceptionText}"
                 TextWrapping="Wrap"
+                VerticalAlignment="Center" />
+            <TextBlock
+                HorizontalAlignment="Center"
+                Margin="0,0,0,3"
+                Text="{Binding MaxFileSizeMbPrompt}"
                 VerticalAlignment="Center" />
             <Button
                 Command="{Binding UploadButton_Click}"

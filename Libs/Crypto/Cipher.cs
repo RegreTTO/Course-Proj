@@ -14,8 +14,14 @@ public static class Cipher
 {
     public static BigInteger n, e, d, p, q;
     public const string ConfigDir = "./config/";
+    const string KeyFilename = "keys.json";
+    private const string KeyPath = ConfigDir + KeyFilename;
+
     private static Mutex m = new Mutex();
     private const int KeyLenDec = 3;
+    private const string DefaultP = "1104346352921921";
+    private const string DefaultQ = "1024477709052937";
+
     static BigInteger ModInverse(BigInteger a, BigInteger m)
     {
         BigInteger m0 = m;
@@ -50,24 +56,46 @@ public static class Cipher
 
     public static void ReadKeys()
     {
-        using (StreamReader reader = new StreamReader(ConfigDir + "keys.json"))
+        var keyFileInfo = new FileInfo(KeyPath);
+        if (!keyFileInfo.Exists || keyFileInfo.Length == 0)
         {
-            var pq = JsonConvert.DeserializeObject<Base>(reader.ReadToEnd()) ??
-                     throw new InvalidDataException("Json поврежден!");
-            p = BigInteger.Parse(pq.p);
-            q = BigInteger.Parse(pq.q);
+            File.Create(KeyPath).Close();
+            using StreamWriter writer = new StreamWriter(KeyPath);
+            writer.Write($"{{\n\t\"p\":{DefaultP},\n\t\"q\":{DefaultQ}\n}}");
+            writer.Close();
+        }
+
+        using (StreamReader reader = new StreamReader(KeyPath))
+        {
+            try
+            {
+                var pq = JsonConvert.DeserializeObject<Base>(reader.ReadToEnd()) ??
+                         throw new InvalidDataException("Json поврежден!");
+
+                p = BigInteger.Parse(pq.p);
+                q = BigInteger.Parse(pq.q);
+            }
+            catch
+            {
+                throw new InvalidDataException("Ошибка парсинга JSON! p и q должны быть числами!");
+            }
+
 
             n = p * q;
             var phi = (p - 1) * (q - 1);
             e = 65537;
             d = ModInverse(e, phi);
-            BigInteger test = new BigInteger(1.40463224e+120);
-            if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
-                throw new InvalidDataException("Ключи не подходят! Выберите взаимопростые числа p и q!");
             if (n.GetByteCount() < KeyLenDec)
             {
-                throw new InvalidDataException($"p и q слишком малы! p*q должно быть хотя бы {KeyLenDec * 8} бит в длину!");
+                throw new InvalidDataException(
+                    $"p и q слишком малы! p*q должно быть хотя бы {KeyLenDec * 8} бит в длину!");
             }
+
+            BigInteger test = new BigInteger(123);
+
+            if (BigInteger.ModPow(BigInteger.ModPow(test, e, n), d, n) != test)
+                throw new InvalidDataException("Ключи не подходят! Выберите взаимопростые числа p и q!");
+
 
             Debug.WriteLine($"n:{n}\n\rd:{d}\n\r");
         }
