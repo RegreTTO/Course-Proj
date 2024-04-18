@@ -23,7 +23,7 @@
     </Design.DataContext>
 
     <Grid
-        ColumnDefinitions="*,4*,*"
+        ColumnDefinitions="*,2*,*"
         RowDefinitions="*, 3*, *"
         ShowGridLines="False">
         <StackPanel
