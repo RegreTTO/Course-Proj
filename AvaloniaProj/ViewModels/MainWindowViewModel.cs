@@ -62,7 +62,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        Directory.CreateDirectory(FileFuncs.Path);
+        Directory.CreateDirectory(FileFuncs.SavedFilesPath);
         Directory.CreateDirectory(Cipher.ConfigDir);
         try
         {
@@ -75,7 +75,7 @@ public class MainWindowViewModel : ViewModelBase
             _areKeysBroken = true;
         }
 
-        var alreadySaved = Directory.GetFiles(FileFuncs.Path);
+        var alreadySaved = Directory.GetFiles(FileFuncs.SavedFilesPath);
         if (alreadySaved.Length > 0)
         {
             foreach (var filePath in alreadySaved)
@@ -177,7 +177,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 IsIndeterminate = true;
 
-                var bytes = await File.ReadAllBytesAsync(FileFuncs.Path + fileToDownload);
+                var bytes = await File.ReadAllBytesAsync(FileFuncs.SavedFilesPath + fileToDownload);
                 try
                 {
                     var msg = await Task.Run(() => Cipher.Decode(bytes));
@@ -201,5 +201,16 @@ public class MainWindowViewModel : ViewModelBase
         {
             ExceptionText = e.Message;
         }
+    }
+
+    public void OpenSaveDataButton_Click()
+    {
+        string path = AppDomain.CurrentDomain.BaseDirectory + "saved_files";
+        Process.Start(new ProcessStartInfo()
+        {
+            FileName = path,
+            UseShellExecute = true,
+            Verb = "open"
+        });
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text;
 using Crypto;
 
@@ -6,20 +7,22 @@ namespace FileFunc;
 
 public static class FileFuncs
 {
-    public static readonly string Path = Directory.GetCurrentDirectory() + "/saved_files/";
+    
+    public static readonly string? ProjectRoot = AppDomain.CurrentDomain.BaseDirectory;
+    public static readonly string SavedFilesPath = ProjectRoot + "./saved_files/";
     public static readonly string Extension = ".ciphered";
 
     public static bool IsFileSaved(string name)
     {
-        if (!File.Exists(Path + name)) return false;
+        if (!File.Exists(SavedFilesPath + name)) return false;
         return true;
     }
 
     public static bool DeleteSavedFile(string name)
     {
         if (!IsFileSaved(name + Extension)) return false;
-        new FileInfo(Path + name + Extension).IsReadOnly = false;
-        File.Delete(Path + name + Extension);
+        new FileInfo(SavedFilesPath + name + Extension).IsReadOnly = false;
+        File.Delete(SavedFilesPath + name + Extension);
         return true;
     }
 
@@ -30,7 +33,7 @@ public static class FileFuncs
     {
         byte[] msg = await File.ReadAllBytesAsync(file.FullName);
         byte[] encoded = await Cipher.Encode(msg);
-        string cipheredFileName = Path + file.Name + Extension;
+        string cipheredFileName = SavedFilesPath + file.Name + Extension;
         await File.WriteAllBytesAsync(cipheredFileName, encoded);
     }
 

@@ -23,7 +23,7 @@
     </Design.DataContext>
 
     <Grid
-        ColumnDefinitions="*,4*,*"
+        ColumnDefinitions="*,2*,*"
         RowDefinitions="*, 3*, *"
         ShowGridLines="False">
         <StackPanel
@@ -69,25 +69,44 @@
             Grid.Row="1"
             HorizontalAlignment="Stretch"
             ItemsSource="{Binding FileNames}"
-            Margin="10,0,0,0"
             SelectedItem="{Binding SelectedItem}"
             SelectionMode="Single"
             VerticalAlignment="Stretch" />
-
-        <Button
-            Command="{Binding DownloadButton_Click}"
-            CornerRadius="10"
-            FontSize="18"
+        <Grid
             Grid.Column="1"
             Grid.Row="2"
-            HorizontalAlignment="Right"
-            HorizontalContentAlignment="Center"
             Margin="0,10,0,0"
-            Padding="10"
-            VerticalAlignment="Top"
-            VerticalContentAlignment="Center">
-            Скачать
-        </Button>
+            RowDefinitions="*,*"
+            ShowGridLines="False">
+            <Button
+                Command="{Binding DownloadButton_Click}"
+                CornerRadius="10"
+                FontSize="18"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                VerticalAlignment="Stretch"
+                VerticalContentAlignment="Center">
+                Скачать
+            </Button>
+            <Button
+                Command="{Binding OpenSaveDataButton_Click}"
+                CornerRadius="10"
+                FontSize="18"
+                Grid.Row="1"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Center"
+                Margin="0,5,0,0"
+                VerticalAlignment="Stretch"
+                VerticalContentAlignment="Center">
+                <TextBlock
+                    HorizontalAlignment="Stretch"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    VerticalAlignment="Center">
+                    Открыть папку с зашифрованными файлами
+                </TextBlock>
+            </Button>
+        </Grid>
 
     </Grid>
 </Window>
