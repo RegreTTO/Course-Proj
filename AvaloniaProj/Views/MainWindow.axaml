@@ -89,6 +89,7 @@
                 Скачать
             </Button>
             <Button
+                Command="{Binding OpenSaveDataButton_Click}"
                 CornerRadius="10"
                 FontSize="18"
                 Grid.Row="1"

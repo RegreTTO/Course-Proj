@@ -13,9 +13,9 @@ class Base
 public static class Cipher
 {
     public static BigInteger n, e, d, p, q;
-    public const string ConfigDir = "./config/";
+    public static readonly string ConfigDir = AppDomain.CurrentDomain.BaseDirectory + "./config/";
     const string KeyFilename = "keys.json";
-    private const string KeyPath = ConfigDir + KeyFilename;
+    private static readonly string KeyPath = ConfigDir + KeyFilename;
 
     private static Mutex m = new Mutex();
     private const int KeyLenDec = 3;
